@@ -1,0 +1,37 @@
+{
+  "name": "Realtime Transcribe",
+  "description": "Realtime speech-to-text with Deepgram.",
+  "short_name": "Realtime",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "id": "/",
+  "start_url": "/",
+  "orientation": "any",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

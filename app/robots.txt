@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /
+
+Sitemap: https://realtime-transcribe.vercel.app/sitemap.xml
