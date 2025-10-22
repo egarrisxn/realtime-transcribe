@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { DeepgramContextProvider } from "@/app/context/deepgram-provider";
 import { MicrophoneContextProvider } from "@/app/context/microphone-provider";
 import "./globals.css";
@@ -64,6 +65,7 @@ export default function RootLayout({
         <MicrophoneContextProvider>
           <DeepgramContextProvider>{children}</DeepgramContextProvider>
         </MicrophoneContextProvider>
+        <Analytics />
       </body>
     </html>
   );
