@@ -2,8 +2,8 @@
 @import "tw-animate-css";
 
 :root {
-  --background: #181f25;
-  --foreground: #b1eaf1;
+  --background: #000000;
+  --foreground: #ffffff;
   font-size: 16px;
 }
 
@@ -23,7 +23,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #000000;
-    --foreground: #139b9b;
+    --foreground: #ffffff;
   }
 }
 

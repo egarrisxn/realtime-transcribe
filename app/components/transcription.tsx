@@ -153,7 +153,7 @@ export default function Transcription(): JSX.Element {
 
   return (
     <>
-      <div className='mx-auto h-full bg-[url(/bg.svg)] bg-cover bg-fixed bg-center bg-no-repeat px-4 md:px-6 lg:px-8'>
+      <div className='mx-auto h-full px-4 md:px-6 lg:px-8'>
         <div className='relative size-full'>
           {microphone && <Visuals microphone={microphone} />}
           <div className='absolute inset-x-0 bottom-32 mx-auto max-w-4xl text-center'>

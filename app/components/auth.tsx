@@ -136,7 +136,7 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
                 onChange={(e) => handleChange(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 disabled={isPending}
-                className={`h-14 w-12 rounded-lg border-2 text-center font-mono text-3xl shadow-md transition-all duration-200 ${status === "error" ? "border-red-400 focus:border-red-600" : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"} bg-gray-50 outline-none`}
+                className={`h-14 w-12 rounded-lg border-2 text-center font-mono text-3xl text-black shadow-md transition-all duration-200 ${status === "error" ? "border-red-400 focus:border-red-600" : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"} bg-gray-50 outline-none`}
               />
             ))}
           </div>
