@@ -5,9 +5,9 @@ export default function Loading() {
         <div className='flex w-full flex-row items-center justify-center gap-1.5'>
           <svg
             className='size-5 animate-spin'
-            width={24}
-            height={24}
-            strokeWidth={2}
+            width={20}
+            height={20}
+            strokeWidth='2'
             stroke='currentColor'
             strokeLinecap='round'
             strokeLinejoin='round'

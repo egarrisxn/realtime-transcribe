@@ -153,15 +153,11 @@ export default function Transcription(): JSX.Element {
 
   return (
     <>
-      <div className='flex h-full antialiased'>
-        <div className='flex size-full flex-row overflow-x-hidden'>
-          <div className='flex h-full flex-auto flex-col'>
-            <div className='relative size-full'>
-              {microphone && <Visuals microphone={microphone} />}
-              <div className='absolute inset-x-0 bottom-32 mx-auto max-w-4xl text-center'>
-                {caption && <span className='bg-black/70 p-8'>{caption}</span>}
-              </div>
-            </div>
+      <div className='mx-auto h-full bg-[url(/bg.svg)] bg-cover bg-fixed bg-center bg-no-repeat px-4 md:px-6 lg:px-8'>
+        <div className='relative size-full'>
+          {microphone && <Visuals microphone={microphone} />}
+          <div className='absolute inset-x-0 bottom-32 mx-auto max-w-4xl text-center'>
+            {caption && <span className='bg-black/70 p-8'>{caption}</span>}
           </div>
         </div>
       </div>
