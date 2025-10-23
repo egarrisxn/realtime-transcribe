@@ -124,7 +124,7 @@ export default function Auth({ onAuthorized }: AuthProps) {
   return (
     <>
       <div className='mx-auto flex w-full max-w-4xl items-center justify-center p-8'>
-        <div className='flex w-full max-w-sm flex-col items-center justify-center rounded-xl border-2 border-white bg-slate-200 p-8 text-center shadow-2xl'>
+        <div className='flex w-full max-w-sm flex-col items-center justify-center rounded-xl border-2 border-white bg-slate-100 px-6 py-8 text-center shadow-2xl sm:px-8'>
           {/* Icon and status indicator */}
           <div
             className={`rounded-full border p-3 sm:p-4 ${
@@ -145,7 +145,7 @@ export default function Auth({ onAuthorized }: AuthProps) {
           </div>
 
           <h2 className='mt-4 text-xl font-extrabold text-gray-900 sm:text-[1.625rem] sm:leading-[1.35]'>
-            Realtime Transcribe
+            Security Access Gate
           </h2>
           <p className={`mt-2 text-sm font-medium ${statusColor}`}>
             {statusText}
@@ -181,8 +181,8 @@ export default function Auth({ onAuthorized }: AuthProps) {
             disabled={buttonDisabled}
             className={`mt-2 w-full max-w-2/3 transform rounded-lg py-2.5 text-sm font-semibold shadow-md transition duration-300 sm:max-w-7/8 sm:py-3 sm:text-base ${
               buttonDisabled
-                ? "cursor-not-allowed bg-gray-500/70"
-                : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg active:scale-95"
+                ? "cursor-not-allowed bg-gray-500/70 text-white/60"
+                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg active:scale-95"
             } ${isPending ? "flex items-center justify-center" : ""}`}
           >
             {isPending ? (

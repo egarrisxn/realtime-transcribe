@@ -3,11 +3,11 @@
 
 // export default function Landing() {
 //   return (
-//     <>
-//       <div className='mx-auto grid size-full place-items-center p-4 md:p-6 lg:p-8'>
+//     <main className='mx-auto -mb-16 min-h-[calc(100%-4rem)] px-4 md:px-6 lg:px-8'>
+//       <div className='mx-auto flex size-full items-center justify-center pt-16 pb-32 2xl:pt-24 2xl:pb-40'>
 //         <Test />
 //       </div>
-//     </>
+//     </main>
 //   );
 // }
 
@@ -21,14 +21,14 @@ import Auth from "./auth";
 export default function Landing() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   return (
-    <>
-      <div className='mx-auto grid size-full place-items-center p-4 md:p-6 lg:p-8'>
+    <main className='mx-auto -mb-16 min-h-[calc(100%-4rem)] px-4 md:px-6 lg:px-8'>
+      <div className='mx-auto flex size-full items-center justify-center pt-28 pb-44 2xl:pt-36 2xl:pb-52'>
         {isAuthorized ? (
           <Transcribe />
         ) : (
           <Auth onAuthorized={() => setIsAuthorized(true)} />
         )}
       </div>
-    </>
+    </main>
   );
 }

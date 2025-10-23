@@ -157,7 +157,7 @@ export default function Transcribe() {
     <>
       <div className='mx-auto flex w-full max-w-4xl items-center justify-center p-8'>
         {caption && (
-          <span className='rounded-xl border border-neutral-800/70 bg-neutral-900/90 p-8 text-center text-xl text-white shadow-2xl sm:text-2xl'>
+          <span className='rounded-xl border-2 border-neutral-950 bg-neutral-900 p-8 text-center text-xl text-white shadow-2xl sm:text-2xl'>
             {caption}
           </span>
         )}
