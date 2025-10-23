@@ -8,9 +8,13 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
-import { Lock, CheckCircle, XCircle } from "lucide-react";
-import { checkAccessCode } from "@/app/actions";
+import { CircleCheckIcon, CircleXIcon, LoaderIcon, LockIcon } from "./icons";
+import { checkAccessCode } from "../actions";
 
+/**
+ * Automatically focuses the next or previous input field
+ * depending on user typing or backspacing.
+ */
 const focusNext = (
   currentInput: HTMLInputElement | null,
   isBackspace = false
@@ -24,31 +28,45 @@ const focusNext = (
   }
 };
 
-export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
+interface AuthProps {
+  onAuthorized: () => void;
+}
+
+/**
+ * Simple 4-digit access code gate.
+ * Used to protect admin routes or moderation panels.
+ */
+export default function Auth({ onAuthorized }: AuthProps) {
   const [isPending, startTransition] = useTransition();
   const [code, setCode] = useState(["", "", "", ""]);
-  const [status, setStatus] = useState("pending"); // 'pending', 'error', 'success'
+  const [status, setStatus] = useState<"pending" | "error" | "success">(
+    "pending"
+  );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Autofocus first input on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
 
+  /**
+   * Handles digit input and auto-focuses next input.
+   */
   const handleChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value;
-    if (value.length > 1) {
-      e.target.value = value[value.length - 1];
-    }
+    if (value.length > 1) e.target.value = value.at(-1)!;
+
     const newCode = [...code];
     newCode[index] = e.target.value;
     setCode(newCode);
     setStatus("pending");
 
-    if (e.target.value && index < 3) {
-      focusNext(inputRefs.current[index], false);
-    }
+    if (e.target.value && index < 3) focusNext(inputRefs.current[index]);
   };
 
+  /**
+   * Handles key presses for backspace navigation and Enter submission.
+   */
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       focusNext(inputRefs.current[index], true);
@@ -58,6 +76,9 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
     }
   };
 
+  /**
+   * Validates the entered code via a server action.
+   */
   const handleVerification = () => {
     if (!code.every((digit) => digit.length === 1)) return;
 
@@ -67,18 +88,18 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
     startTransition(async () => {
       try {
         const result = await checkAccessCode(enteredCode);
-
         if (result.success) {
           setStatus("success");
           setTimeout(onAuthorized, 1000);
         } else {
-          setStatus("error");
           setCode(["", "", "", ""]);
+          setStatus("error");
           setTimeout(() => inputRefs.current[0]?.focus(), 100);
         }
       } catch (error) {
-        setStatus("error");
         console.error("Server Action failed:", error);
+        setCode(["", "", "", ""]);
+        setStatus("error");
       }
     });
   };
@@ -86,6 +107,7 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
   const isCodeComplete = code.every((digit) => digit.length === 1);
   const buttonDisabled = !isCodeComplete || status === "success" || isPending;
 
+  // Dynamic status messaging
   let statusText = "Enter 4-digit access code";
   let statusColor = "text-gray-500";
   if (isPending) {
@@ -101,28 +123,36 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
 
   return (
     <>
-      <div className='mx-auto flex size-full items-center justify-center px-4 md:px-6 lg:px-8'>
-        <div className='flex w-full max-w-sm flex-col items-center justify-center rounded-xl bg-white p-8 shadow-2xl'>
+      <div className='mx-auto flex w-full max-w-4xl items-center justify-center p-8'>
+        <div className='flex w-full max-w-sm flex-col items-center justify-center rounded-xl border-2 border-white bg-slate-200 p-8 text-center shadow-2xl'>
+          {/* Icon and status indicator */}
           <div
-            className={`rounded-full p-3 ${status === "error" ? "bg-red-100" : status === "success" ? "bg-green-100" : "bg-blue-100"}`}
+            className={`rounded-full border p-3 sm:p-4 ${
+              status === "error"
+                ? "border-red-300 bg-red-300/80"
+                : status === "success"
+                  ? "border-green-300 bg-green-300/80"
+                  : "border-blue-300 bg-blue-300/80"
+            }`}
           >
             {status === "success" ? (
-              <CheckCircle className='size-8 text-green-600' />
+              <CircleCheckIcon className='size-6 text-green-600 sm:size-8' />
             ) : status === "error" ? (
-              <XCircle className='size-8 text-red-600' />
+              <CircleXIcon className='size-6 text-red-600 sm:size-8' />
             ) : (
-              <Lock className='size-8 text-blue-600' />
+              <LockIcon className='size-6 text-blue-600 sm:size-8' />
             )}
           </div>
 
-          <h2 className='mt-4 text-2xl font-extrabold text-gray-800'>
-            Secure Access Gate
+          <h2 className='mt-4 text-xl font-extrabold text-gray-900 sm:text-[1.625rem] sm:leading-[1.35]'>
+            Realtime Transcribe
           </h2>
           <p className={`mt-2 text-sm font-medium ${statusColor}`}>
             {statusText}
           </p>
 
-          <div className='my-6 flex space-x-3'>
+          {/* 4-digit input grid */}
+          <div className='my-6 flex space-x-2.5 sm:space-x-3'>
             {code.map((digit, index) => (
               <input
                 key={index}
@@ -136,35 +166,27 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
                 onChange={(e) => handleChange(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 disabled={isPending}
-                className={`h-14 w-12 rounded-lg border-2 text-center font-mono text-3xl text-black shadow-md transition-all duration-200 ${status === "error" ? "border-red-400 focus:border-red-600" : "border-gray-300 focus:border-blue-500 focus:ring-blue-500"} bg-gray-50 outline-none`}
+                className={`h-12 w-10 rounded-lg border-2 text-center font-mono text-2xl text-black shadow-md transition-all duration-200 sm:h-14 sm:w-12 sm:text-3xl ${
+                  status === "error"
+                    ? "border-red-500 focus:border-red-600"
+                    : "border-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                } bg-gray-50 outline-none`}
               />
             ))}
           </div>
 
+          {/* Submit button */}
           <button
             onClick={handleVerification}
             disabled={buttonDisabled}
-            className={`mt-2 w-full transform rounded-lg py-3 font-semibold text-white shadow-md transition duration-300 ${
+            className={`mt-2 w-full max-w-2/3 transform rounded-lg py-2.5 text-sm font-semibold shadow-md transition duration-300 sm:max-w-7/8 sm:py-3 sm:text-base ${
               buttonDisabled
-                ? "cursor-not-allowed bg-gray-400"
+                ? "cursor-not-allowed bg-gray-500/70"
                 : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg active:scale-95"
             } ${isPending ? "flex items-center justify-center" : ""}`}
           >
             {isPending ? (
-              <svg
-                className='size-5 animate-spin text-white'
-                width={20}
-                height={20}
-                strokeWidth='2'
-                stroke='currentColor'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                viewBox='0 0 24 24'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path d='M21 12a9 9 0 1 1-6.219-8.56' />
-              </svg>
+              <LoaderIcon className='size-4.5 animate-spin sm:size-5' />
             ) : status === "success" ? (
               "Accessing..."
             ) : (
@@ -172,7 +194,9 @@ export default function Auth({ onAuthorized }: { onAuthorized: () => void }) {
             )}
           </button>
 
-          <p className='mt-4 text-xs text-gray-400'>Hint: Gavin Phoenix</p>
+          <p className='mt-4.5 text-xs text-gray-500/80 sm:mt-4'>
+            Hint: Gavin Phoenix
+          </p>
         </div>
       </div>
     </>

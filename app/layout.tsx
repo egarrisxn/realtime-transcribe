@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { DeepgramContextProvider } from "@/app/context/deepgram-provider";
-import { MicrophoneContextProvider } from "@/app/context/microphone-provider";
+import { DeepgramContextProvider } from "./context/deepgram-provider";
+import { MicrophoneContextProvider } from "./context/microphone-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -55,15 +55,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang='en' className='h-dvh'>
+    <html lang='en' className='h-dvh'>
       <head>
         <meta name='apple-mobile-web-app-title' content='Realtime Transcribe' />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} h-full font-sans`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} h-full`}>
         <MicrophoneContextProvider>
-          <DeepgramContextProvider>{children}</DeepgramContextProvider>
+          <DeepgramContextProvider>
+            <main className='size-full bg-radial-[at_50%_50%] from-slate-900 via-slate-950 to-black to-95% font-sans antialiased'>
+              {children}
+            </main>
+          </DeepgramContextProvider>
         </MicrophoneContextProvider>
         <Analytics />
       </body>

@@ -12,14 +12,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --check \"**/*.{js,jsx,ts,tsx}\" --cache",
-    "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\" --cache"
+    "format": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx}\" --cache",
+    "format:fix": "prettier --write \"**/*.{js,jsx,mjs,ts,tsx}\" --cache"
   },
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
     "@vercel/analytics": "^1.5.0",
     "babel-plugin-react-compiler": "^1.0.0",
-    "lucide-react": "^0.546.0",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"

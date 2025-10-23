@@ -1,19 +1,23 @@
 /**
  * Proxy/Middleware function that handles CORS configuration for API routes.
  *
- * This proxy/middleware function is responsible for setting the appropriate CORS headers
- * on the response, based on the configured CORS options. It checks the origin of
- * the request and sets the `Access-Control-Allow-Origin` header accordingly. It
- * also sets the other CORS-related headers, such as `Access-Control-Allow-Credentials`,
- * `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, and
- * `Access-Control-Expose-Headers`.
+ * This middleware inspects request origins and applies CORS headers dynamically
+ * based on environment-configured allowed origins, headers, and methods.
  *
- * The proxy/middleware function is configured to be applied to all API routes, as defined
- * by the `config` object at the end of the file.
+ * It sets:
+ * - Access-Control-Allow-Origin
+ * - Access-Control-Allow-Methods
+ * - Access-Control-Allow-Headers
+ * - Access-Control-Expose-Headers
+ * - Access-Control-Allow-Credentials
+ * - Access-Control-Max-Age
+ *
+ * Applied globally to matching API routes as defined by the `config` export below.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
 
+// CORS configuration loaded from environment variables
 const corsOptions: {
   allowedMethods: string[];
   allowedOrigins: string[];
@@ -22,23 +26,27 @@ const corsOptions: {
   maxAge?: number;
   credentials: boolean;
 } = {
-  allowedMethods: (process.env?.ALLOWED_METHODS || "").split(","),
-  allowedOrigins: (process.env?.ALLOWED_ORIGIN || "").split(","),
-  allowedHeaders: (process.env?.ALLOWED_HEADERS || "").split(","),
-  exposedHeaders: (process.env?.EXPOSED_HEADERS || "").split(","),
+  allowedMethods: (process.env.ALLOWED_METHODS || "").split(","),
+  allowedOrigins: (process.env.ALLOWED_ORIGIN || "").split(","),
+  allowedHeaders: (process.env.ALLOWED_HEADERS || "").split(","),
+  exposedHeaders: (process.env.EXPOSED_HEADERS || "").split(","),
   maxAge:
-    (process.env?.PREFLIGHT_MAX_AGE &&
-      parseInt(process.env?.PREFLIGHT_MAX_AGE)) ||
-    undefined, // 60 * 60 * 24 * 30, // 30 days
-  credentials: process.env?.CREDENTIALS == "true",
+    (process.env.PREFLIGHT_MAX_AGE &&
+      parseInt(process.env.PREFLIGHT_MAX_AGE)) ||
+    undefined, // optional override (e.g., 2592000 = 30 days)
+  credentials: process.env.CREDENTIALS === "true",
 };
 
+/**
+ * Applies CORS headers to API responses.
+ */
 export function proxy(request: NextRequest) {
-  // Response
   const response = NextResponse.next();
 
-  // Allowed origins check
+  // Determine request origin
   const origin = request.headers.get("origin") ?? "";
+
+  // Validate origin against allowed list
   if (
     corsOptions.allowedOrigins.includes("*") ||
     corsOptions.allowedOrigins.includes(origin)
@@ -46,7 +54,7 @@ export function proxy(request: NextRequest) {
     response.headers.set("Access-Control-Allow-Origin", origin);
   }
 
-  // Set default CORS headers
+  // Apply default CORS headers
   response.headers.set(
     "Access-Control-Allow-Credentials",
     corsOptions.credentials.toString()
@@ -63,16 +71,18 @@ export function proxy(request: NextRequest) {
     "Access-Control-Expose-Headers",
     corsOptions.exposedHeaders.join(",")
   );
-  response.headers.set(
-    "Access-Control-Max-Age",
-    corsOptions.maxAge?.toString() ?? ""
-  );
 
-  // Return
+  if (corsOptions.maxAge) {
+    response.headers.set(
+      "Access-Control-Max-Age",
+      corsOptions.maxAge.toString()
+    );
+  }
+
   return response;
 }
 
-// See "Matching Paths" below to learn more
+// Define which routes this middleware applies to
 export const config = {
   matcher: "/api/authenticate",
 };

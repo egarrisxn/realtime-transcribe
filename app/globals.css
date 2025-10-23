@@ -4,13 +4,6 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
-  font-size: 16px;
-}
-
-@media (min-width: 1920px) {
-  :root {
-    font-size: 24px;
-  }
 }
 
 @theme inline {
@@ -24,14 +17,6 @@
   :root {
     --background: #000000;
     --foreground: #ffffff;
-  }
-}
-
-@layer base {
-  input[type="text"]::-webkit-inner-spin-button,
-  input[type="text"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
   }
 }
 

@@ -8,7 +8,6 @@ import {
   type LiveSchema,
   type LiveTranscriptionEvent,
 } from "@deepgram/sdk";
-
 import {
   createContext,
   useCallback,
@@ -16,6 +15,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+
+/**
+ * Fetches a temporary Deepgram access token from your Next.js API route.
+ * The token is short-lived and scoped for live transcription use.
+ */
+export const getToken = async (): Promise<string> => {
+  const response = await fetch("/api/authenticate", { cache: "no-store" });
+  const result = await response.json();
+  return result.access_token;
+};
 
 interface DeepgramContextType {
   connection: LiveClient | null;
@@ -32,12 +41,9 @@ interface DeepgramContextProviderProps {
   children: ReactNode;
 }
 
-const getToken = async (): Promise<string> => {
-  const response = await fetch("/api/authenticate", { cache: "no-store" });
-  const result = await response.json();
-  return result.access_token;
-};
-
+/**
+ * Provides Deepgram real-time transcription connection and state management.
+ */
 const DeepgramContextProvider = ({
   children,
 }: DeepgramContextProviderProps) => {
@@ -46,7 +52,9 @@ const DeepgramContextProvider = ({
     LiveConnectionState.CLOSED
   );
 
-  // Connects to the Deepgram speech recognition service and sets up a live transcription session.
+  /**
+   * Establishes a new WebSocket connection with Deepgram's live transcription API.
+   */
   const connectToDeepgram = useCallback(
     async (options: LiveSchema, endpoint?: string) => {
       const token = await getToken();
@@ -54,26 +62,26 @@ const DeepgramContextProvider = ({
 
       const conn = deepgram.listen.live(options, endpoint);
 
-      conn.addListener(LiveTranscriptionEvents.Open, () => {
-        setConnectionState(LiveConnectionState.OPEN);
-      });
-
-      conn.addListener(LiveTranscriptionEvents.Close, () => {
-        setConnectionState(LiveConnectionState.CLOSED);
-      });
+      conn.addListener(LiveTranscriptionEvents.Open, () =>
+        setConnectionState(LiveConnectionState.OPEN)
+      );
+      conn.addListener(LiveTranscriptionEvents.Close, () =>
+        setConnectionState(LiveConnectionState.CLOSED)
+      );
 
       setConnection(conn);
     },
     []
   );
 
+  /**
+   * Gracefully closes the Deepgram WebSocket session.
+   */
   const disconnectFromDeepgram = useCallback(async () => {
     if (connection) {
       connection.finish();
       setConnection(null);
-      // NOTE: Relying on the 'Close' event listener to update connectionState is fine,
-      // but we might want to call setConnectionState(LiveConnectionState.CLOSED); here
-      // for immediate feedback if we don't trust the event listener timing.
+      // Optionally: setConnectionState(LiveConnectionState.CLOSED);
     }
   }, [connection]);
 
@@ -91,9 +99,12 @@ const DeepgramContextProvider = ({
   );
 };
 
+/**
+ * Hook to access Deepgram connection and state.
+ */
 function useDeepgram(): DeepgramContextType {
   const context = useContext(DeepgramContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error(
       "useDeepgram must be used within a DeepgramContextProvider"
     );

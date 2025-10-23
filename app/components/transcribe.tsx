@@ -6,39 +6,39 @@ import {
   useEffectEvent,
   useRef,
   useState,
-  type JSX,
 } from "react";
+
 import {
   LiveConnectionState,
   LiveTranscriptionEvent,
   LiveTranscriptionEvents,
   useDeepgram,
-} from "@/app/context/deepgram-provider";
+} from "../context/deepgram-provider";
 import {
+  useMicrophone,
   MicrophoneEvents,
   MicrophoneState,
-  useMicrophone,
-} from "@/app/context/microphone-provider";
-import Visuals from "./visuals";
+} from "../context/microphone-provider";
 
-export default function Transcription(): JSX.Element {
+export default function Transcribe() {
   const [caption, setCaption] = useState<string | undefined>(
-    "Powered by Deepgram"
+    "Realtime Transcribe in 3..2..1..."
   );
   const { connection, connectToDeepgram, connectionState } = useDeepgram();
   const { setupMicrophone, microphone, startMicrophone, microphoneState } =
     useMicrophone();
 
-  // Type is number | null (number is the type for browser-side timer IDs)
+  // Timeout to clear captions after a brief delay
   const captionTimeout = useRef<number | null>(null);
+  // Interval for keeping Deepgram connection alive
   const keepAliveInterval = useRef<number | null>(null);
 
-  // Initial microphone setup on mount
+  // 🔧 Step 1: Request microphone permission & initialize MediaRecorder
   useEffect(() => {
     setupMicrophone();
   }, [setupMicrophone]);
 
-  // Connect to Deepgram once microphone is ready
+  // 🔗 Step 2: Once microphone is ready, connect to Deepgram live API
   useEffect(() => {
     if (microphoneState === MicrophoneState.Ready) {
       connectToDeepgram({
@@ -46,62 +46,64 @@ export default function Transcription(): JSX.Element {
         interim_results: true,
         smart_format: true,
         filler_words: true,
-        utterance_end_ms: 3000,
+        utterance_end_ms: 3000, // Helps Deepgram know when a user stops talking
       });
     }
   }, [microphoneState, connectToDeepgram]);
 
-  // Handler for incoming audio data from the microphone.
+  // 🎙 Step 3: Handle microphone audio chunks being generated
   const onData = useCallback(
     (e: BlobEvent) => {
-      // iOS SAFARI FIX:
+      // Some browsers (notably Safari on iOS) may emit zero-size chunks — ignore them
       if (e.data.size > 0) {
-        connection?.send(e.data);
+        connection?.send(e.data); // Send audio to Deepgram via WebSocket
       }
     },
     [connection]
   );
 
-  // Handler for incoming transcription events.
+  // 🧠 Step 4: Handle transcription messages coming from Deepgram
   const onTranscript = useEffectEvent((data: LiveTranscriptionEvent) => {
     const { is_final: isFinal, speech_final: speechFinal } = data;
     const thisCaption = data.channel.alternatives[0].transcript;
 
     console.log("thisCaption", thisCaption);
+
+    // Update caption if a non-empty string was received
     if (thisCaption !== "") {
       console.log('thisCaption !== ""', thisCaption);
       setCaption(thisCaption);
     }
 
+    // If Deepgram marks the utterance as final, clear the caption after delay
     if (isFinal && speechFinal) {
-      // Clear and reset the timeout
       if (captionTimeout.current !== null) {
         clearTimeout(captionTimeout.current);
       }
 
-      // Use 'as unknown as number' for robust cross-environment typing of timer ID
       captionTimeout.current = setTimeout(() => {
-        setCaption(undefined);
-        captionTimeout.current = null; // Mark as cleared
-      }, 3000) as unknown as number;
+        setCaption(undefined); // Hide caption text
+        captionTimeout.current = null;
+      }, 3000) as unknown as number; // 3-second fade-out delay
     }
   });
 
-  // Attach Listeners and Start Microphone
+  // 🎧 Step 5: Attach listeners for audio data + transcriptions once connected
   useEffect(() => {
-    // Exit early if resources aren't available
     if (!microphone || !connection) return;
 
     if (connectionState === LiveConnectionState.OPEN) {
-      // Attach listeners
+      // Listen for transcript messages from Deepgram
       connection.addListener(LiveTranscriptionEvents.Transcript, onTranscript);
+
+      // Forward recorded audio chunks to Deepgram
       microphone.addEventListener(MicrophoneEvents.DataAvailable, onData);
 
-      // Start the microphone after listeners are attached
+      // Begin recording from the microphone
       startMicrophone();
     }
 
-    // Cleanup function: runs on unmount or when dependencies change
+    // Cleanup listeners when dependencies change or component unmounts
     return () => {
       if (connection) {
         connection.removeListener(
@@ -113,7 +115,7 @@ export default function Transcription(): JSX.Element {
         microphone.removeEventListener(MicrophoneEvents.DataAvailable, onData);
       }
 
-      // Explicit null check before calling clearTimeout
+      // Clear caption timeout if active
       if (captionTimeout.current !== null) {
         clearTimeout(captionTimeout.current);
       }
@@ -121,30 +123,30 @@ export default function Transcription(): JSX.Element {
     };
   }, [connectionState, connection, microphone, onData, startMicrophone]);
 
-  // Keep-Alive logic
+  // 🔄 Step 6: Keep Deepgram connection alive if the mic is idle
   useEffect(() => {
     if (!connection) return;
 
+    // Send periodic keepAlive signals to prevent session timeout
     if (
       microphoneState !== MicrophoneState.Open &&
       connectionState === LiveConnectionState.OPEN
     ) {
       connection.keepAlive();
 
-      // Use 'as unknown as number' for robust typing of interval ID
       keepAliveInterval.current = setInterval(() => {
         connection.keepAlive();
-      }, 10000) as unknown as number;
+      }, 10000) as unknown as number; // Every 10 seconds
     } else {
-      // Explicit null check before calling clearInterval
+      // Stop the keep-alive interval when mic is recording or connection closes
       if (keepAliveInterval.current !== null) {
         clearInterval(keepAliveInterval.current);
       }
       keepAliveInterval.current = null;
     }
 
+    // Cleanup interval on dismount
     return () => {
-      // Explicit null check in the cleanup return
       if (keepAliveInterval.current !== null) {
         clearInterval(keepAliveInterval.current);
       }
@@ -153,13 +155,12 @@ export default function Transcription(): JSX.Element {
 
   return (
     <>
-      <div className='mx-auto h-full px-4 md:px-6 lg:px-8'>
-        <div className='relative size-full'>
-          {microphone && <Visuals microphone={microphone} />}
-          <div className='absolute inset-x-0 bottom-32 mx-auto max-w-4xl text-center'>
-            {caption && <span className='bg-black/70 p-8'>{caption}</span>}
-          </div>
-        </div>
+      <div className='mx-auto flex w-full max-w-4xl items-center justify-center p-8'>
+        {caption && (
+          <span className='rounded-xl border border-neutral-800/70 bg-neutral-900/90 p-8 text-center text-xl text-white shadow-2xl sm:text-2xl'>
+            {caption}
+          </span>
+        )}
       </div>
     </>
   );

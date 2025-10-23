@@ -1,20 +1,34 @@
+//! Testing
+// import Test from "./test";
+
+// export default function Landing() {
+//   return (
+//     <>
+//       <div className='mx-auto grid size-full place-items-center p-4 md:p-6 lg:p-8'>
+//         <Test />
+//       </div>
+//     </>
+//   );
+// }
+
 "use client";
 
 import { useState } from "react";
-import Transcription from "@/app/components/transcription";
-import Auth from "@/app/components/auth";
+
+import Transcribe from "./transcribe";
+import Auth from "./auth";
 
 export default function Landing() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   return (
     <>
-      <main className='h-full overflow-hidden bg-linear-to-t from-black via-slate-950 to-slate-900'>
+      <div className='mx-auto grid size-full place-items-center p-4 md:p-6 lg:p-8'>
         {isAuthorized ? (
-          <Transcription />
+          <Transcribe />
         ) : (
           <Auth onAuthorized={() => setIsAuthorized(true)} />
         )}
-      </main>
+      </div>
     </>
   );
 }

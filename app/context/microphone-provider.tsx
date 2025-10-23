@@ -9,14 +9,10 @@ import {
   type ReactNode,
 } from "react";
 
-interface MicrophoneContextType {
-  microphone: MediaRecorder | null;
-  startMicrophone: () => void;
-  stopMicrophone: () => void;
-  setupMicrophone: () => void;
-  microphoneState: MicrophoneState | null;
-}
-
+/**
+ * Enum mapping MediaRecorder events to consistent string keys.
+ * Makes it easier to register/unregister listeners safely.
+ */
 export enum MicrophoneEvents {
   DataAvailable = "dataavailable",
   Error = "error",
@@ -26,6 +22,9 @@ export enum MicrophoneEvents {
   Stop = "stop",
 }
 
+/**
+ * Represents the lifecycle of the microphone setup and recording process.
+ */
 export enum MicrophoneState {
   NotSetup = -1,
   SettingUp = 0,
@@ -39,6 +38,17 @@ export enum MicrophoneState {
   Stopped = 8,
 }
 
+/**
+ * Context type that defines the shape of values shared through React Context.
+ */
+interface MicrophoneContextType {
+  microphone: MediaRecorder | null;
+  startMicrophone: () => void;
+  stopMicrophone: () => void;
+  setupMicrophone: () => void;
+  microphoneState: MicrophoneState | null;
+}
+
 const MicrophoneContext = createContext<MicrophoneContextType | undefined>(
   undefined
 );
@@ -47,6 +57,10 @@ interface MicrophoneContextProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Provides microphone setup and control logic across the app.
+ * Handles permissions, recording lifecycle, and clean shutdown.
+ */
 const MicrophoneContextProvider = ({
   children,
 }: MicrophoneContextProviderProps) => {
@@ -54,13 +68,25 @@ const MicrophoneContextProvider = ({
     MicrophoneState.NotSetup
   );
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null);
-  // State to track the underlying MediaStream for cleanup
   const [userMediaStream, setUserMediaStream] = useState<MediaStream | null>(
     null
   );
 
-  const setupMicrophone = async () => {
+  /**
+   * Requests microphone permissions and initializes the MediaRecorder instance.
+   */
+  const setupMicrophone = useCallback(async () => {
     setMicrophoneState(MicrophoneState.SettingUp);
+
+    // --- Defensive Check Added ---
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("Microphone API not supported or context is insecure.");
+      alert(
+        "Microphone access is blocked. Please ensure you are using HTTPS or a secure localhost environment."
+      );
+      setMicrophoneState(MicrophoneState.Error);
+      return;
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -72,58 +98,59 @@ const MicrophoneContextProvider = ({
 
       const recorder = new MediaRecorder(stream);
 
-      setUserMediaStream(stream); // Store the stream
+      setUserMediaStream(stream);
       setMicrophone(recorder);
       setMicrophoneState(MicrophoneState.Ready);
     } catch (err: unknown) {
       console.error("Microphone setup failed:", err);
       setMicrophoneState(MicrophoneState.Error);
-      // Do not throw, handle state locally
     }
-  };
+  }, []);
 
+  /**
+   * Gracefully stops recording and releases audio hardware resources.
+   */
   const stopMicrophone = useCallback(() => {
     setMicrophoneState(MicrophoneState.Stopping);
 
     if (microphone?.state === "recording" || microphone?.state === "paused") {
-      // Use .stop() to fully end recording and trigger event
       microphone.stop();
     }
 
-    // Stop the media tracks to release hardware resource
+    // Stop all active media tracks (this releases the microphone hardware)
     if (userMediaStream) {
       userMediaStream.getTracks().forEach((track) => track.stop());
-      setUserMediaStream(null); // Clear stream reference
+      setUserMediaStream(null);
     }
-
-    // State will be confirmed by the 'stop' event listener
   }, [microphone, userMediaStream]);
 
+  /**
+   * Starts or resumes microphone recording depending on its current state.
+   */
   const startMicrophone = useCallback(() => {
     if (!microphone) return;
-
     setMicrophoneState(MicrophoneState.Opening);
 
     try {
-      // Check states correctly before starting/resuming
       if (microphone.state === "paused") {
         microphone.resume();
       } else if (microphone.state === "inactive") {
-        microphone.start(250);
+        microphone.start(250); // Emit chunks every 250ms
       } else {
         console.warn(
           `Attempted to start microphone in state: ${microphone.state}`
         );
       }
-
-      // State will be confirmed by the 'start' event listener
     } catch (error) {
       console.error("Error executing microphone.start:", error);
       setMicrophoneState(MicrophoneState.Error);
     }
   }, [microphone]);
 
-  // Use useEffect to attach listeners for robust state management
+  /**
+   * Synchronizes MediaRecorder events with internal React state.
+   * Ensures the UI always reflects the actual recorder status.
+   */
   useEffect(() => {
     if (!microphone) return;
 
@@ -140,14 +167,13 @@ const MicrophoneContextProvider = ({
     microphone.addEventListener(MicrophoneEvents.Pause, handlePause);
     microphone.addEventListener(MicrophoneEvents.Error, handleError);
 
-    // Cleanup listeners on unmount or microphone change
     return () => {
       microphone.removeEventListener(MicrophoneEvents.Start, handleStart);
       microphone.removeEventListener(MicrophoneEvents.Stop, handleStop);
       microphone.removeEventListener(MicrophoneEvents.Pause, handlePause);
       microphone.removeEventListener(MicrophoneEvents.Error, handleError);
 
-      // Final safety cleanup on unmount
+      // Final cleanup safeguard
       if (microphone.state !== "inactive") {
         microphone.stop();
       }
@@ -169,15 +195,16 @@ const MicrophoneContextProvider = ({
   );
 };
 
+/**
+ * Hook that exposes microphone controls to React components.
+ */
 function useMicrophone(): MicrophoneContextType {
   const context = useContext(MicrophoneContext);
-
   if (context === undefined) {
     throw new Error(
       "useMicrophone must be used within a MicrophoneContextProvider"
     );
   }
-
   return context;
 }
 
