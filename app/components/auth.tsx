@@ -145,7 +145,7 @@ export default function Auth({ onAuthorized }: AuthProps) {
           </div>
 
           <h2 className='mt-4 text-xl font-extrabold text-gray-900 sm:text-[1.625rem] sm:leading-[1.35]'>
-            Security Access Gate
+            Security Code
           </h2>
           <p className={`mt-2 text-sm font-medium ${statusColor}`}>
             {statusText}
@@ -190,12 +190,12 @@ export default function Auth({ onAuthorized }: AuthProps) {
             ) : status === "success" ? (
               "Accessing..."
             ) : (
-              "Unlock Content"
+              "Unlock Now"
             )}
           </button>
 
-          <p className='mt-4.5 text-xs text-gray-500/80 sm:mt-4'>
-            Hint: Gavin Phoenix
+          <p className='pt-1 text-sm font-semibold text-gray-600 sm:mt-4'>
+            Hint: 1 _ _ _
           </p>
         </div>
       </div>
